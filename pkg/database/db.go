@@ -15,17 +15,17 @@ type Database interface {
 
 // InMemoryDb is the data repository for storing receipt points.
 type InMemoryDb struct {
-	receipts map[string]int
+	receiptPoints map[string]int
 }
 
 // NewInMemoryDb creates a new InMemoryDb instance.
 func NewInMemoryDb() InMemoryDb {
-	return InMemoryDb{receipts: make(map[string]int),}
+	return InMemoryDb{receiptPoints: make(map[string]int),}
 	}
 
 // GetPointsById retrieves points associated with a receipt ID.
 func (db InMemoryDb) GetPointsById(id string) (int, error) {
-	points, exists := db.receipts[id]
+	points, exists := db.receiptPoints[id]
 	if !exists {
 		log.Printf("Database::GetPointsById: receipt ID %s not found\n", id)
 		return -1, errors.New("receipt Id not found")
@@ -38,7 +38,7 @@ func (db InMemoryDb) GetPointsById(id string) (int, error) {
 func (db InMemoryDb) AddPoints(points int) (string, error) {
 	log.Println("Database::AddPoints: adding a new receipt entry")
 	id := uuid.New().String()
-	db.receipts[id] = points
+	db.receiptPoints[id] = points
 	log.Printf("Database::AddPoints: successfully added receipt entry with ID %s\n", id)
 	return id, nil
 }
