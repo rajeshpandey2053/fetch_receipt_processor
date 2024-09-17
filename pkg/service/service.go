@@ -21,13 +21,13 @@ func (s *ReceiptService) CalculatePoints(receipt models.Receipt) int {
 	log.Println("ReceiptService::CalculatePoints: calculating points for receipt")
 	points := 0
 	rules := []Rule{
-		Rule1{},
-		Rule2{},
-		Rule3{},
-		Rule4{},
-		Rule5{},
-		Rule6{},
-		Rule7{},
+		RuleAplhaNumeric{},
+		RuleDollarAmt{},
+		RuleTotalMultiple{},
+		RuleEveryItem{},
+		RuleItemDesc{},
+		RuleOddDate{},
+		RuleTime{},
 	}
 
 	for _, rule := range rules {
