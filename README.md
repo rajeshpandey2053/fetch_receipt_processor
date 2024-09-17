@@ -37,7 +37,7 @@ cd fetch_receipt_processor
 You will need the following installed on your local machine
 - docker -- [install guide](https://docs.docker.com/get-docker/)
 
-### Run using Docker
+### Build and Run using Docker
 Make sure docker is running and then run docker compose to start the server
 ```bash
 docker compose up --build
