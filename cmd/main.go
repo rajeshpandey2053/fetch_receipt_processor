@@ -29,18 +29,16 @@ func main(){
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello, World!"))
-	}).Methods("GET")
+	receiptsRouter := router.PathPrefix("/receipts").Subrouter()
+	receiptsRouter.HandleFunc("/process", receiptHandler.ProcessReceipt).Methods("POST")
+	receiptsRouter.HandleFunc("/{id}/points", receiptHandler.GetPointsById).Methods("GET")
 
-	router.HandleFunc("/receipts/process", receiptHandler.ProcessReceipt).Methods("POST")
-	router.HandleFunc("/receipts/{id}/points", receiptHandler.GetPointsById).Methods("GET")
 	// Swagger documentation route
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	addr := ":" + viper.GetString("server.port")
 	log.Println("Server started on", addr)
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(addr, router))
 
 }
 
