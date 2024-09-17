@@ -16,7 +16,7 @@ import (
 )
 
 // Helper function to set up a router
-func setupRouter() *mux.Router {
+func setupRouter() (*mux.Router, *database.InMemoryDb) {
 
 	mockreceiptDb := database.NewInMemoryDb()
 	mockreceitService := service.NewReceiptService(mockreceiptDb)
@@ -25,14 +25,12 @@ func setupRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/receipts/process", mockreceiptHandler.ProcessReceipt).Methods("POST")
 	router.HandleFunc("/receipts/{id}/points", mockreceiptHandler.GetPointsById).Methods("GET")
-	return router
+	return router, &mockreceiptDb
 }
 
 
-
-
 func TestReceiptHandler_ProcessReceipt(t *testing.T) {
-	router := setupRouter()
+	router,_ := setupRouter()
 
 	tests := []struct {
 		name           string
@@ -57,13 +55,14 @@ func TestReceiptHandler_ProcessReceipt(t *testing.T) {
 			name:           "Invalid JSON",
 			payload:        []byte(`{"invalid_json":`),
 			expectedStatus: http.StatusBadRequest,
-			expectedBody:   "The receipt is invalid\n",
+			expectedBody:   "The receipt is invalid",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest("POST", "/receipts/process", bytes.NewBuffer(tt.payload))
+			req.Header.Set("Content-Type", "application/json")
 			require.NoError(t, err)
 
 			rr := httptest.NewRecorder()
@@ -78,6 +77,7 @@ func TestReceiptHandler_ProcessReceipt(t *testing.T) {
 			if tt.checkJSONField != "" {
 				var responseBody map[string]interface{}
 				err = json.Unmarshal(rr.Body.Bytes(), &responseBody)
+				
 				require.NoError(t, err, "Response body should be valid JSON")
 				_, exists := responseBody[tt.checkJSONField]
 				assert.True(t, exists, "Response should contain a '%s' field", tt.checkJSONField)
@@ -87,8 +87,10 @@ func TestReceiptHandler_ProcessReceipt(t *testing.T) {
 }
 
 func TestReceiptHandler_GetPointsByID(t *testing.T) {
-	router := setupRouter()
+	router, mockreceiptDb := setupRouter()
 
+	testID, _ := mockreceiptDb.AddPoints(100)
+	println(testID)
 
 	tests := []struct {
 		name           string
@@ -99,7 +101,7 @@ func TestReceiptHandler_GetPointsByID(t *testing.T) {
 	}{
 		{
 			name:           "Valid ID",
-			id:             ts.testID,
+			id:             testID,
 			expectedStatus: http.StatusOK,
 			checkJSONField: "points",
 		},
@@ -107,7 +109,7 @@ func TestReceiptHandler_GetPointsByID(t *testing.T) {
 			name:           "Invalid ID",
 			id:             "invalidID",
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   "Receipt not found\n",
+			expectedBody:   "No receipt found for that id",
 		},
 	}
 

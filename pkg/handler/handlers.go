@@ -18,14 +18,14 @@ func NewReceiptHandler(service *service.ReceiptService) *ReceiptHandler {
 	return &ReceiptHandler{service: service}
 }
 
-func InternalServerErrorHandler(w http.ResponseWriter, r *http.Request) {
-    w.WriteHeader(http.StatusInternalServerError)
-    w.Write([]byte("500 Internal Server Error"))
+func StatusBadRequestErrorHandler(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusBadRequest)
+    w.Write([]byte("The receipt is invalid"))
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
     w.WriteHeader(http.StatusNotFound)
-    w.Write([]byte("404 Not Found"))
+    w.Write([]byte("No receipt found for that id"))
 }
 
 // ProcessReceipt processes a receipt and returns the receipt ID.
@@ -45,15 +45,17 @@ func (h *ReceiptHandler) ProcessReceipt(w http.ResponseWriter, r *http.Request) 
 
 	if err := json.NewDecoder(r.Body).Decode(&receipt); err != nil {
 		log.Printf("ReceiptHandler::ProcessReceipt: error decoding request body: %v\n", err)
-		InternalServerErrorHandler(w, r)
+		StatusBadRequestErrorHandler(w, r)
 		return
 	}
+
+	log.Printf("ReceiptHandler::ProcessReceipt: received receipt: %+v\n", receipt)
 
 	// Process receipt
 	id, err := h.service.ProcessReceipt(receipt)
 	if err != nil {
 		log.Printf("ReceiptHandler::ProcessReceipt: error processing receipt: %v\n", err)
-		InternalServerErrorHandler(w, r)
+		StatusBadRequestErrorHandler(w, r)
 
 		return
 	}
@@ -70,7 +72,7 @@ func (h *ReceiptHandler) ProcessReceipt(w http.ResponseWriter, r *http.Request) 
 // @Param id path string true "Receipt ID"
 // @Produce json
 // @Success 200 {object} models.GetPointsByIdResponse
-// @Failure 404 {string} string "Receipt not found"
+// @Failure 404 {string} string "No receipt found for that id"
 // @Router /receipts/{id}/points [get]
 func (h *ReceiptHandler) GetPointsById(w http.ResponseWriter, r *http.Request) {
 	log.Println("ReceiptHandler::GetPointsById: getting points by id")
